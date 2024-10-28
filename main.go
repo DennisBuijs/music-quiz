@@ -156,7 +156,7 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("CurrentSong"),
-			Data:  []byte("<audio controls autoplay src=\"" + song.AudioUrl + "\">"),
+			Data:  []byte("<audio controls src=\"" + song.AudioUrl + "\">"),
 		})
 	}
 }

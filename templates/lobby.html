@@ -1,6 +1,7 @@
 <div hx-ext="sse"
      sse-connect="/events?stream={{ .LobbySlug }}"
-     sse-swap="CurrentSong">
+     sse-swap="CurrentSong"
+     class="audio-container">
 </div>
 
 <div hx-ext="sse" sse-connect="/events?stream={{ .LobbySlug }}" sse-swap="message"></div>
