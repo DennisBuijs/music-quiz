@@ -131,12 +131,10 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		guess := r.FormValue("guess")
 
 		if guess == lobby.CurrentSong.Artist || guess == lobby.CurrentSong.Title {
-			fmt.Println("[GUESS] Correct guess")
+			server.Publish(lobby.Slug, &sse.Event{
+				Data: []byte("Correct guess: " + guess),
+			})
 		}
-
-		server.Publish(lobby.Slug, &sse.Event{
-			Data: []byte(guess),
-		})
 	}
 }
 
