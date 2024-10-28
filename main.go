@@ -157,7 +157,8 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 		fmt.Printf("[LOBBY] song changed to [%s] - [%s]", song.Artist, song.Title)
 
 		server.Publish(lobby.Slug, &sse.Event{
-			Data: []byte(song.AudioUrl),
+			Event: []byte("CurrentSong"),
+			Data:  []byte("<audio controls autoplay src=\"" + song.AudioUrl + "\">"),
 		})
 	}
 }
