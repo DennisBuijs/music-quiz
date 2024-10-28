@@ -35,23 +35,28 @@
                 padding: .5rem;
                 background-color: whitesmoke;
                 border: 2px solid #111;
+                border-radius: .25rem;
             }
 
             input, audio {
                 width: 100%;
             }
         </style>
+
+        <script src="https://unpkg.com/htmx.org@2.0.3"></script>
     </head>
     <body>
         <header>
             <h1>Music Quiz</h1>
             <audio controls src="{{ .AudioUrl }}"></audio>
         </header>
-        <main>Loading lobby...</main>
+        <main hx-get="/lobby" hx-trigger="load">Loading lobby...</main>
         <footer>
-            <label>
-                <input type="text" placeholder="Enter your guess">
-            </label>
+            <form hx-post="/guess" hx-target="this" hx-swap="outerHTML">
+                <label>
+                    <input type="text" name="guess" placeholder="Enter your guess">
+                </label>
+            </form>
         </footer>
     </body>
 </html>

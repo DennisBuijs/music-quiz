@@ -45,6 +45,8 @@ func main() {
 	}
 
 	http.HandleFunc("/", indexHandler(lobby))
+	http.HandleFunc("/lobby", lobbyHandler(lobby))
+	http.HandleFunc("/guess", guessHandler())
 
 	fmt.Printf("[SERVER] starting lobby [%s] on :3000", lobby.Name)
 	err := http.ListenAndServe("localhost:3000", nil)
@@ -64,13 +66,46 @@ func indexHandler(lobby Lobby) func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data := struct {
-			LobbyName string
-			AudioUrl  string
-		}{LobbyName: lobby.Name,
+			AudioUrl string
+		}{
 			AudioUrl: song.AudioUrl,
 		}
 
 		if err := tmpl.Execute(w, data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func lobbyHandler(lobby Lobby) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFiles("./templates/lobby.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		data := struct {
+			LobbyName string
+		}{
+			LobbyName: lobby.Name,
+		}
+
+		if err := tmpl.Execute(w, data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func guessHandler() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFiles("./templates/guess-form.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err := tmpl.Execute(w, nil); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
