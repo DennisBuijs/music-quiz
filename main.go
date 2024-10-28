@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"html/template"
 )
 
 type Song struct {
@@ -46,17 +48,30 @@ func main() {
 
 	fmt.Printf("[SERVER] starting lobby [%s] on :3000", lobby.Name)
 	err := http.ListenAndServe("localhost:3000", nil)
+	if err != nil {
+		log.Panic("[SERVER] could not start server")
+	}
 }
 
 func indexHandler(lobby Lobby) func(w http.ResponseWriter, r *http.Request) {
 	song := lobby.Songs[0]
-	fmt.Println(song.AudioUrl)
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		html := fmt.Sprintf("<h1>Music Quiz</h1><audio controls src=\"%s\">", song.AudioUrl)
-		_, err := w.Write([]byte(html))
+		tmpl, err := template.ParseFiles("./templates/chrome.html")
 		if err != nil {
-			//
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		data := struct {
+			LobbyName string
+			AudioUrl  string
+		}{LobbyName: lobby.Name,
+			AudioUrl: song.AudioUrl,
+		}
+
+		if err := tmpl.Execute(w, data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
 }

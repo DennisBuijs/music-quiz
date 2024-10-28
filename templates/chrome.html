@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Music Quiz</title>
+
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                font-family: sans-serif;
+                color: #111;
+                height: 100vh;
+
+                display: grid;
+                grid-template-rows: 160px 1fr 80px;
+            }
+
+            header, main, footer {
+                padding: 1rem;
+            }
+
+            header {
+                background-color: whitesmoke;
+            }
+
+            input {
+                font: inherit;
+                font-size: 16px;
+                padding: .5rem;
+                background-color: whitesmoke;
+                border: 2px solid #111;
+            }
+
+            input, audio {
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>Music Quiz</h1>
+            <audio controls src="{{ .AudioUrl }}"></audio>
+        </header>
+        <main>Loading lobby...</main>
+        <footer>
+            <label>
+                <input type="text" placeholder="Enter your guess">
+            </label>
+        </footer>
+    </body>
+</html>
