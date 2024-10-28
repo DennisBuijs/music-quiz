@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/r3labs/sse/v2"
 	"log"
 	"net/http"
 	"html/template"
+	_ "github.com/r3labs/sse/v2"
 )
 
 type Song struct {
@@ -15,6 +17,7 @@ type Song struct {
 
 type Lobby struct {
 	Name  string
+	Slug  string
 	Songs []Song
 }
 
@@ -41,15 +44,22 @@ func main() {
 
 	lobby := Lobby{
 		Name:  "Carnavalskrakers",
+		Slug:  "carnavalskrakers",
 		Songs: songs,
 	}
 
-	http.HandleFunc("/", indexHandler(lobby))
-	http.HandleFunc("/lobby", lobbyHandler(lobby))
-	http.HandleFunc("/guess", guessHandler())
+	server := sse.New()
+	lobby.startLobby(server)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", indexHandler(lobby))
+	mux.HandleFunc("/lobby", lobbyHandler(lobby))
+	mux.HandleFunc("/guess", guessHandler(lobby, server))
+
+	mux.HandleFunc("/events", server.ServeHTTP)
 
 	fmt.Printf("[SERVER] starting lobby [%s] on :3000", lobby.Name)
-	err := http.ListenAndServe("localhost:3000", nil)
+	err := http.ListenAndServe("localhost:3000", mux)
 	if err != nil {
 		log.Panic("[SERVER] could not start server")
 	}
@@ -97,7 +107,7 @@ func lobbyHandler(lobby Lobby) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func guessHandler() func(w http.ResponseWriter, r *http.Request) {
+func guessHandler(lobby Lobby, server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("./templates/guess-form.html")
 		if err != nil {
@@ -108,5 +118,16 @@ func guessHandler() func(w http.ResponseWriter, r *http.Request) {
 		if err := tmpl.Execute(w, nil); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+
+		guess := r.FormValue("guess")
+		fmt.Printf("[GUESS] %s", guess)
+
+		server.Publish(lobby.Slug, &sse.Event{
+			Data: []byte(guess),
+		})
 	}
+}
+
+func (lobby Lobby) startLobby(server *sse.Server) {
+	server.CreateStream(lobby.Slug)
 }
