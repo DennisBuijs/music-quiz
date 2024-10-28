@@ -97,8 +97,10 @@ func lobbyHandler(lobby Lobby) func(w http.ResponseWriter, r *http.Request) {
 
 		data := struct {
 			LobbyName string
+			LobbySlug string
 		}{
 			LobbyName: lobby.Name,
+			LobbySlug: lobby.Slug,
 		}
 
 		if err := tmpl.Execute(w, data); err != nil {
