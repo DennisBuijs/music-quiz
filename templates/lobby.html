@@ -2,13 +2,11 @@
      sse-connect="/events?stream={{ .LobbySlug }}">
 
     <div class="phase">
-        <div>Guess!</div>
+        <div class="audio-container"
+             sse-swap="CurrentSong"
+             class="audio-container">
+        </div>
         <div id="timer" sse-swap="Timer">--</div>
-    </div>
-
-    <div class="audio-container"
-         sse-swap="CurrentSong"
-         class="audio-container">
     </div>
 
     <div class="messages"

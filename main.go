@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-var SONG_DURATION = 10 * time.Second
-var PAUSE_DURATION = 1 * time.Second
+var SONG_DURATION = 30 * time.Second
+var BREAK_DURATION = 15 * time.Second
 
 type Song struct {
 	Artist   string
@@ -27,6 +27,7 @@ type Lobby struct {
 	Songs             []Song
 	CurrentSong       Song
 	CurrentPhaseEndAt time.Time
+	RoundsPlayed      int
 }
 
 func main() {
@@ -51,9 +52,11 @@ func main() {
 	})
 
 	lobby := &Lobby{
-		Name:  "Carnavalskrakers",
-		Slug:  "carnavalskrakers",
-		Songs: songs,
+		Name:              "Carnavalskrakers",
+		Slug:              "carnavalskrakers",
+		Songs:             songs,
+		CurrentPhaseEndAt: time.Now().Add(SONG_DURATION),
+		RoundsPlayed:      0,
 	}
 
 	server := sse.New()
@@ -153,11 +156,11 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 
 	lobby.CurrentSong = lobby.Songs[0]
 
-	ticker := time.NewTicker(SONG_DURATION)
-	defer ticker.Stop()
+	roundTimer := time.NewTicker(SONG_DURATION + BREAK_DURATION)
+	defer roundTimer.Stop()
 
 	for {
-		<-ticker.C
+		<-roundTimer.C
 		randomSongIndex := rand.Intn(len(lobby.Songs))
 		song := lobby.Songs[randomSongIndex]
 
@@ -167,9 +170,22 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("CurrentSong"),
-			Data:  []byte("<audio src=\"" + song.AudioUrl + "\">"),
+			Data:  []byte("Guess!<audio autoplay src=\"" + song.AudioUrl + "\">"),
 		})
 
+		server.Publish(lobby.Slug, &sse.Event{
+			Event: []byte("Timer"),
+			Data:  []byte(fmt.Sprintf(lobby.secondsUntilNextPhase())),
+		})
+
+		breakTimer := time.After(SONG_DURATION)
+		<-breakTimer
+		server.Publish(lobby.Slug, &sse.Event{
+			Event: []byte("CurrentSong"),
+			Data:  []byte("Break!"),
+		})
+
+		lobby.CurrentPhaseEndAt = time.Now().Add(BREAK_DURATION)
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("Timer"),
 			Data:  []byte(fmt.Sprintf(lobby.secondsUntilNextPhase())),
