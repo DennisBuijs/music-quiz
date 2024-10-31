@@ -9,10 +9,11 @@
         <div id="timer" sse-swap="Timer">--</div>
     </div>
 
-    <div id="player-list" hx-get="/players" hx-trigger="load,sse:RefreshPlayers"></div>
+    <div id="player-list" hx-get="/players" hx-trigger="load, sse:RefreshPlayers"></div>
 
     <div id="messages"
-         sse-swap="Chat">
+         sse-swap="Chat"
+         hx-swap="beforeend">
     </div>
 </div>
 

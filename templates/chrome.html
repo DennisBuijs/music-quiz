@@ -74,7 +74,15 @@
             }
 
             #messages {
-                padding: 1rem;
+                overflow: auto;
+            }
+
+            .chat-message {
+                padding: .5rem 1rem;
+
+                &:nth-child(even) {
+                    background: #f6f6f6;
+                }
             }
 
             input {

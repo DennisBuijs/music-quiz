@@ -206,7 +206,7 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("Chat"),
-			Data:  []byte(message),
+			Data:  []byte("<div class=\"chat-message\">" + message + "</div>"),
 		})
 	}
 }
