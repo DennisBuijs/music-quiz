@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+var SONG_DURATION = 3 * time.Second
+var PAUSE_DURATION = 1 * time.Second
+
 type Song struct {
 	Artist   string
 	Title    string
@@ -18,10 +21,11 @@ type Song struct {
 }
 
 type Lobby struct {
-	Name        string
-	Slug        string
-	Songs       []Song
-	CurrentSong Song
+	Name              string
+	Slug              string
+	Songs             []Song
+	CurrentSong       Song
+	CurrentPhaseEndAt time.Time
 }
 
 func main() {
@@ -61,7 +65,7 @@ func main() {
 
 	mux.HandleFunc("/events", server.ServeHTTP)
 
-	fmt.Printf("[SERVER] starting lobby [%s] on :3000", lobby.Name)
+	fmt.Printf("[SERVER] starting lobby [%s] on :3000\n", lobby.Name)
 	err := http.ListenAndServe("localhost:3000", mux)
 	if err != nil {
 		log.Panic("[SERVER] could not start server")
@@ -143,7 +147,7 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 
 	lobby.CurrentSong = lobby.Songs[0]
 
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(SONG_DURATION)
 	defer ticker.Stop()
 
 	for {
@@ -152,11 +156,17 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 		song := lobby.Songs[randomSongIndex]
 
 		lobby.CurrentSong = song
-		fmt.Printf("[LOBBY] song changed to [%s] - [%s]", song.Artist, song.Title)
+		lobby.CurrentPhaseEndAt = time.Now().Add(SONG_DURATION)
+		fmt.Printf("[LOBBY] song changed to [%s] - [%s]\n", song.Artist, song.Title)
 
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("CurrentSong"),
-			Data:  []byte("<audio controls autoplay src=\"" + song.AudioUrl + "\">"),
+			Data:  []byte("<audio src=\"" + song.AudioUrl + "\">"),
+		})
+
+		server.Publish(lobby.Slug, &sse.Event{
+			Event: []byte("CurrentPhaseEndAt"),
+			Data:  []byte(lobby.CurrentPhaseEndAt.String()),
 		})
 	}
 }
