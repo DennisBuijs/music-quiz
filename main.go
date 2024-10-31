@@ -28,6 +28,7 @@ type Lobby struct {
 	CurrentSong       Song
 	CurrentPhaseEndAt time.Time
 	RoundsPlayed      int
+	Players           []Player
 }
 
 type Player struct {
@@ -68,7 +69,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", indexHandler(lobby))
-	mux.HandleFunc("/login", loginHandler(server))
+	mux.HandleFunc("/login", loginHandler(lobby, server))
 	mux.HandleFunc("/lobby", lobbyHandler(lobby, server))
 	mux.HandleFunc("POST /guess", guessHandler(lobby, server))
 
@@ -103,12 +104,25 @@ func indexHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func loginHandler(server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
+func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		playerName := r.FormValue("name")
+
 		cookie := http.Cookie{
 			Name:  "player",
-			Value: r.FormValue("name"),
+			Value: playerName,
 		}
+
+		player := Player{
+			Name: playerName,
+		}
+
+		lobby.addPlayer(player)
+
+		server.Publish(lobby.Slug, &sse.Event{
+			Event: []byte("Timer"),
+			Data:  []byte(fmt.Sprintf(lobby.secondsUntilNextPhase())),
+		})
 
 		http.SetCookie(w, &cookie)
 		http.Redirect(w, r, "/", http.StatusFound)
@@ -129,10 +143,12 @@ func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			LobbyName string
 			LobbySlug string
 			Player    *Player
+			Players   []Player
 		}{
 			LobbyName: lobby.Name,
 			LobbySlug: lobby.Slug,
 			Player:    player,
+			Players:   lobby.Players,
 		}
 
 		server.Publish(lobby.Slug, &sse.Event{
@@ -217,6 +233,10 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 func (lobby *Lobby) secondsUntilNextPhase() string {
 	seconds := math.Ceil(lobby.CurrentPhaseEndAt.Sub(time.Now()).Seconds())
 	return fmt.Sprintf("%02d", int(seconds))
+}
+
+func (lobby *Lobby) addPlayer(player Player) {
+	lobby.Players = append(lobby.Players, player)
 }
 
 func getPlayerFromRequest(r *http.Request) *Player {
