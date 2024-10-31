@@ -30,6 +30,10 @@ type Lobby struct {
 	RoundsPlayed      int
 }
 
+type Player struct {
+	Name string
+}
+
 func main() {
 	var songs []Song
 
@@ -64,6 +68,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", indexHandler(lobby))
+	mux.HandleFunc("/login", loginHandler(server))
 	mux.HandleFunc("/lobby", lobbyHandler(lobby, server))
 	mux.HandleFunc("POST /guess", guessHandler(lobby, server))
 
@@ -98,6 +103,18 @@ func indexHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func loginHandler(server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie := http.Cookie{
+			Name:  "player",
+			Value: r.FormValue("name"),
+		}
+
+		http.SetCookie(w, &cookie)
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+}
+
 func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("./templates/lobby.html")
@@ -106,12 +123,16 @@ func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			return
 		}
 
+		player := getPlayerFromRequest(r)
+
 		data := struct {
 			LobbyName string
 			LobbySlug string
+			Player    *Player
 		}{
 			LobbyName: lobby.Name,
 			LobbySlug: lobby.Slug,
+			Player:    player,
 		}
 
 		server.Publish(lobby.Slug, &sse.Event{
@@ -196,4 +217,17 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 func (lobby *Lobby) secondsUntilNextPhase() string {
 	seconds := math.Ceil(lobby.CurrentPhaseEndAt.Sub(time.Now()).Seconds())
 	return fmt.Sprintf("%02d", int(seconds))
+}
+
+func getPlayerFromRequest(r *http.Request) *Player {
+	var player *Player
+	cookie, _ := r.Cookie("player")
+
+	if cookie != nil {
+		player = &Player{
+			Name: cookie.Value,
+		}
+	}
+
+	return player
 }
