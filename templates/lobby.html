@@ -9,14 +9,14 @@
         <div id="timer" sse-swap="Timer">--</div>
     </div>
 
-    <div class="messages"
+    <div id="player-list" hx-get="/players" hx-trigger="load,sse:RefreshPlayers"></div>
+
+    <div id="messages"
          sse-swap="message">
     </div>
 </div>
 
-{{ if .Player }}
-{{ .Player.Name }}
-{{ else }}
+{{ if not .Player }}
 <style>
     #player-dialog {
         padding: 1.25rem;

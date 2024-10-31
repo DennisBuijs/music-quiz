@@ -71,6 +71,7 @@ func main() {
 	mux.HandleFunc("/", indexHandler(lobby))
 	mux.HandleFunc("/login", loginHandler(lobby, server))
 	mux.HandleFunc("/lobby", lobbyHandler(lobby, server))
+	mux.HandleFunc("/players", playersHandler(lobby))
 	mux.HandleFunc("POST /guess", guessHandler(lobby, server))
 
 	mux.HandleFunc("/events", server.ServeHTTP)
@@ -157,6 +158,20 @@ func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		})
 
 		if err := tmpl.Execute(w, data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func playersHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFiles("./templates/players.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err := tmpl.Execute(w, lobby.Players); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}

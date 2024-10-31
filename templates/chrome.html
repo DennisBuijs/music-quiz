@@ -43,6 +43,40 @@
                 font-variant-numeric: tabular-nums;
             }
 
+            #player-list {
+                background-color: whitesmoke;
+                display: flex;
+
+                div {
+                    padding: .5rem 1rem 1rem;
+                    display: flex;
+                    align-items: center;
+
+                    &::before {
+                        margin-right: .5rem;
+                        font-size: 1.5rem;
+                        position: relative;
+                    }
+
+                    &:nth-child(1)::before {
+                        content: "🏆";
+                        margin-right: .75rem;
+                    }
+
+                    &:nth-child(2)::before {
+                        content: "🥈";
+                    }
+
+                    &:nth-child(3)::before {
+                        content: "🥉";
+                    }
+                }
+            }
+
+            #messages {
+                padding: 1rem;
+            }
+
             input {
                 font: inherit;
                 font-size: 1.125rem;
