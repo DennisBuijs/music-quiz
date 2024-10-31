@@ -183,6 +183,8 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			return
 		}
 
+		player := getPlayerFromRequest(r)
+
 		tmpl, err := template.ParseFiles("./templates/guess-form.html")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -195,11 +197,17 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 
 		guess := r.FormValue("guess")
 
+		var message string
 		if guess == lobby.CurrentSong.Artist || guess == lobby.CurrentSong.Title {
-			server.Publish(lobby.Slug, &sse.Event{
-				Data: []byte("Correct guess: " + guess),
-			})
+			message = fmt.Sprintf("%s guessed correct!", player.Name)
+		} else {
+			message = fmt.Sprintf("%s guessed wrong!", player.Name)
 		}
+
+		server.Publish(lobby.Slug, &sse.Event{
+			Event: []byte("Chat"),
+			Data:  []byte(message),
+		})
 	}
 }
 
