@@ -18,15 +18,29 @@
                 height: 100vh;
 
                 display: grid;
-                grid-template-rows: 100px 1fr max-content;
+                grid-template-rows: max-content 1fr max-content;
             }
 
-            header, footer {
+            header {
+                background-color: whitesmoke;
+                padding-inline: 1rem;
+            }
+
+            footer {
                 padding: 1rem;
             }
 
-            header, .audio-container {
+            .phase {
+                display: grid;
+                grid-template-columns: 3fr 1fr;
+                font-size: 1.5rem;
                 background-color: whitesmoke;
+                padding: 1rem;
+            }
+
+            #timer {
+                text-align: right;
+                font-variant-numeric: tabular-nums;
             }
 
             input {
@@ -45,6 +59,19 @@
 
         <script src="https://unpkg.com/htmx.org@2.0.3"></script>
         <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+
+        <script>
+            setInterval(() => {
+                const timerEl = document.querySelector('#timer');
+                let timeLeft = parseInt(timerEl.textContent, 10) - 1;
+
+                if (timeLeft === 0) {
+                    timeLeft = 1;
+                }
+
+                timerEl.textContent = timeLeft.toString().padStart(2, '0');
+            }, 1000);
+        </script>
     </head>
     <body>
         <header>

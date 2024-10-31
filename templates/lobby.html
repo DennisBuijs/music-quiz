@@ -1,6 +1,11 @@
 <div hx-ext="sse"
      sse-connect="/events?stream={{ .LobbySlug }}">
 
+    <div class="phase">
+        <div>Guess!</div>
+        <div id="timer" sse-swap="Timer">--</div>
+    </div>
+
     <div class="audio-container"
          sse-swap="CurrentSong"
          class="audio-container">
@@ -9,5 +14,4 @@
     <div class="messages"
          sse-swap="message">
     </div>
-
 </div>

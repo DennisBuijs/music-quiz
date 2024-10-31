@@ -6,12 +6,13 @@ import (
 	_ "github.com/r3labs/sse/v2"
 	"html/template"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
 	"time"
 )
 
-var SONG_DURATION = 3 * time.Second
+var SONG_DURATION = 10 * time.Second
 var PAUSE_DURATION = 1 * time.Second
 
 type Song struct {
@@ -60,7 +61,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", indexHandler(lobby))
-	mux.HandleFunc("/lobby", lobbyHandler(lobby))
+	mux.HandleFunc("/lobby", lobbyHandler(lobby, server))
 	mux.HandleFunc("POST /guess", guessHandler(lobby, server))
 
 	mux.HandleFunc("/events", server.ServeHTTP)
@@ -94,7 +95,7 @@ func indexHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func lobbyHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
+func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("./templates/lobby.html")
 		if err != nil {
@@ -109,6 +110,11 @@ func lobbyHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
 			LobbyName: lobby.Name,
 			LobbySlug: lobby.Slug,
 		}
+
+		server.Publish(lobby.Slug, &sse.Event{
+			Event: []byte("Timer"),
+			Data:  []byte(fmt.Sprintf(lobby.secondsUntilNextPhase())),
+		})
 
 		if err := tmpl.Execute(w, data); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -165,8 +171,13 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 		})
 
 		server.Publish(lobby.Slug, &sse.Event{
-			Event: []byte("CurrentPhaseEndAt"),
-			Data:  []byte(lobby.CurrentPhaseEndAt.String()),
+			Event: []byte("Timer"),
+			Data:  []byte(fmt.Sprintf(lobby.secondsUntilNextPhase())),
 		})
 	}
+}
+
+func (lobby *Lobby) secondsUntilNextPhase() string {
+	seconds := math.Ceil(lobby.CurrentPhaseEndAt.Sub(time.Now()).Seconds())
+	return fmt.Sprintf("%02d", int(seconds))
 }
