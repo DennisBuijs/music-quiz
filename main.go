@@ -19,9 +19,12 @@ var SONG_DURATION = 30 * time.Second
 var BREAK_DURATION = 5 * time.Second
 
 type Song struct {
-	Artist   string
-	Title    string
-	AudioUrl string
+	ID          string `json:"id"`
+	Artist      string `json:"artist"`
+	Title       string `json:"title"`
+	ArtUrl      string `json:"artUrl"`
+	AudioUrl    string `json:"audioUrl"`
+	ExternalUrl string `json:"externalUrl"`
 }
 
 type Lobby struct {
