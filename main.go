@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	cryptoRand "crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -13,6 +14,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -74,6 +76,7 @@ func main() {
 	go lobby.startLobby(server)
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/asset/*", assetHandler())
 	mux.HandleFunc("/", indexHandler(lobby))
 	mux.HandleFunc("/login", loginHandler(lobby, server))
 	mux.HandleFunc("/lobby", lobbyHandler(lobby, server))
@@ -246,7 +249,7 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("CurrentSong"),
-			Data:  []byte("Guess!<audio src=\"" + song.AudioUrl + "\">"),
+			Data:  []byte("Guess!<audio autoplay src=\"" + song.AudioUrl + "\">"),
 		})
 
 		server.Publish(lobby.Slug, &sse.Event{
@@ -256,6 +259,13 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 
 		breakTimer := time.After(SONG_DURATION)
 		<-breakTimer
+
+		lastSongChatMessage := song.asChatMessage()
+		server.Publish(lobby.Slug, &sse.Event{
+			Event: []byte("Chat"),
+			Data:  []byte(lastSongChatMessage),
+		})
+
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("CurrentSong"),
 			Data:  []byte("Break!"),
@@ -315,5 +325,30 @@ func (lobby *Lobby) addScore(playerId string, pointsAmount int) {
 			score.Score += pointsAmount
 			return
 		}
+	}
+}
+
+func (song Song) asChatMessage() string {
+	tmpl, err := template.ParseFiles("./templates/song-chat-message.html")
+	if err != nil {
+		fmt.Println("[SERVER] error loading template")
+		return ""
+	}
+
+	var message bytes.Buffer
+	err = tmpl.Execute(&message, song)
+	if err != nil {
+		fmt.Println("[SERVER] error parsing template")
+		return ""
+	}
+
+	return strings.ReplaceAll(message.String(), "\n", "")
+}
+
+func assetHandler() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		filePath := "./assets" + r.URL.Path[len("/asset"):]
+		fmt.Println(filePath)
+		http.ServeFile(w, r, filePath)
 	}
 }

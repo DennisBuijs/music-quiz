@@ -14,7 +14,7 @@
             body {
                 margin: 0;
                 font-family: sans-serif;
-                color: #111;
+                color: #121212;
                 height: 100vh;
 
                 display: grid;
@@ -78,6 +78,9 @@
             }
 
             .chat-message {
+                height: 48px;
+                display: flex;
+                align-items: center;
                 padding: .5rem 1rem;
 
                 &:nth-child(even) {
@@ -100,6 +103,42 @@
 
             dialog::backdrop {
                 background: rgba(0, 0, 0, .24);
+            }
+
+            .chat-message.song {
+                display: grid;
+                grid-template-columns: 64px 1fr 64px;
+                height: 64px;
+                padding: 0;
+                gap: 1rem;
+
+                .art img {
+                    width: 64px;
+                    aspect-ratio: 1;
+                }
+
+                .meta {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    gap: .25rem;
+
+                    :first-child {
+                        font-weight: 600;
+                    }
+                }
+
+                .external {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    padding-inline-end: 1rem;
+
+                    img {
+                        width: 32px;
+                        aspect-ratio: 1;
+                    }
+                }
             }
         </style>
 
