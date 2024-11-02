@@ -12,6 +12,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -48,25 +49,18 @@ type Player struct {
 }
 
 func main() {
+	songData, err := os.ReadFile("songs.json")
+	if err != nil {
+		fmt.Println("[SERVER] error loading songs.json")
+		return
+	}
+
 	var songs []Song
-
-	songs = append(songs, Song{
-		"Guus Meeuwis",
-		"Geef Mij Je Angst",
-		"https://p.scdn.co/mp3-preview/0f8a68d9ca5fef269fe77cefd0087f0a6c390d10?cid=cfe923b2d660439caf2b557b21f31221",
-	})
-
-	songs = append(songs, Song{
-		"Guus Meeuwis",
-		"Brabant",
-		"https://p.scdn.co/mp3-preview/d23338bd240c9cb8cc99f8c0f28eb6f4214b9e5b?cid=cfe923b2d660439caf2b557b21f31221",
-	})
-
-	songs = append(songs, Song{
-		"Guus Meeuwis",
-		"Per Spoor (Kedeng Kedeng)",
-		"https://p.scdn.co/mp3-preview/a17e3e78be00473fe527e99cc1246e2244fa43cb?cid=cfe923b2d660439caf2b557b21f31221",
-	})
+	err = json.Unmarshal(songData, &songs)
+	if err != nil {
+		fmt.Println("[SERVER] error parsing songs.json")
+		return
+	}
 
 	lobby := &Lobby{
 		Name:              "Carnavalskrakers",
@@ -89,7 +83,7 @@ func main() {
 	mux.HandleFunc("/events", server.ServeHTTP)
 
 	fmt.Printf("[SERVER] starting lobby [%s] on :3000\n", lobby.Name)
-	err := http.ListenAndServe("localhost:3000", mux)
+	err = http.ListenAndServe("localhost:3000", mux)
 	if err != nil {
 		log.Panic("[SERVER] could not start server")
 	}
