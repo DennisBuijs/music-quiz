@@ -1,6 +1,9 @@
 package main
 
 import (
+	cryptoRand "crypto/rand"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/r3labs/sse/v2"
 	_ "github.com/r3labs/sse/v2"
@@ -13,7 +16,7 @@ import (
 )
 
 var SONG_DURATION = 30 * time.Second
-var BREAK_DURATION = 15 * time.Second
+var BREAK_DURATION = 5 * time.Second
 
 type Song struct {
 	Artist   string
@@ -28,7 +31,7 @@ type Lobby struct {
 	CurrentSong       Song
 	CurrentPhaseEndAt time.Time
 	RoundsPlayed      int
-	Score             []Score
+	Score             []*Score
 }
 
 type Score struct {
@@ -37,7 +40,8 @@ type Score struct {
 }
 
 type Player struct {
-	Name string
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 func main() {
@@ -114,13 +118,19 @@ func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 	return func(w http.ResponseWriter, r *http.Request) {
 		playerName := r.FormValue("name")
 
-		cookie := http.Cookie{
-			Name:  "player",
-			Value: playerName,
+		player := Player{
+			ID:   generateRandomString(10),
+			Name: playerName,
 		}
 
-		player := Player{
-			Name: playerName,
+		cookieValue, err := json.Marshal(player)
+		if err != nil {
+
+		}
+
+		cookie := http.Cookie{
+			Name:  "player",
+			Value: base64.StdEncoding.EncodeToString(cookieValue),
 		}
 
 		lobby.addPlayer(player)
@@ -149,12 +159,10 @@ func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			LobbyName string
 			LobbySlug string
 			Player    *Player
-			Score     []Score
 		}{
 			LobbyName: lobby.Name,
 			LobbySlug: lobby.Slug,
 			Player:    player,
-			Score:     lobby.Score,
 		}
 
 		server.Publish(lobby.Slug, &sse.Event{
@@ -235,7 +243,7 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("CurrentSong"),
-			Data:  []byte("Guess!<audio autoplay src=\"" + song.AudioUrl + "\">"),
+			Data:  []byte("Guess!<audio src=\"" + song.AudioUrl + "\">"),
 		})
 
 		server.Publish(lobby.Slug, &sse.Event{
@@ -264,7 +272,7 @@ func (lobby *Lobby) secondsUntilNextPhase() string {
 }
 
 func (lobby *Lobby) addPlayer(player Player) {
-	lobby.Score = append(lobby.Score, Score{
+	lobby.Score = append(lobby.Score, &Score{
 		Player: player,
 		Score:  0,
 	})
@@ -275,10 +283,25 @@ func getPlayerFromRequest(r *http.Request) *Player {
 	cookie, _ := r.Cookie("player")
 
 	if cookie != nil {
-		player = &Player{
-			Name: cookie.Value,
+		decodedCookieValue, err := base64.StdEncoding.DecodeString(cookie.Value)
+		if err != nil {
+			//
+		}
+
+		err = json.Unmarshal([]byte(decodedCookieValue), &player)
+		if err != nil {
+			//
 		}
 	}
 
 	return player
+}
+
+func generateRandomString(length int) string {
+	b := make([]byte, length)
+	if _, err := cryptoRand.Read(b); err != nil {
+		panic(err)
+	}
+
+	return fmt.Sprintf("%X", b)
 }
