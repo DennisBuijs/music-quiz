@@ -60,7 +60,7 @@ func main() {
 	})
 
 	songs = append(songs, Song{
-		"Guus Meeuwig",
+		"Guus Meeuwis",
 		"Per Spoor (Kedeng Kedeng)",
 		"https://p.scdn.co/mp3-preview/a17e3e78be00473fe527e99cc1246e2244fa43cb?cid=cfe923b2d660439caf2b557b21f31221",
 	})
@@ -217,7 +217,7 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 
 			server.Publish(lobby.Slug, &sse.Event{
 				Event: []byte("RefreshPlayers"),
-				Data:  []byte(""),
+				Data:  []byte("_"),
 			})
 		} else {
 			message = fmt.Sprintf("%s guessed wrong!", player.Name)
