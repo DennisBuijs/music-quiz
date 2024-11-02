@@ -28,7 +28,12 @@ type Lobby struct {
 	CurrentSong       Song
 	CurrentPhaseEndAt time.Time
 	RoundsPlayed      int
-	Players           []Player
+	Score             []Score
+}
+
+type Score struct {
+	Player Player
+	Score  int
 }
 
 type Player struct {
@@ -144,12 +149,12 @@ func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			LobbyName string
 			LobbySlug string
 			Player    *Player
-			Players   []Player
+			Score     []Score
 		}{
 			LobbyName: lobby.Name,
 			LobbySlug: lobby.Slug,
 			Player:    player,
-			Players:   lobby.Players,
+			Score:     lobby.Score,
 		}
 
 		server.Publish(lobby.Slug, &sse.Event{
@@ -171,7 +176,7 @@ func playersHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := tmpl.Execute(w, lobby.Players); err != nil {
+		if err := tmpl.Execute(w, lobby.Score); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -259,7 +264,10 @@ func (lobby *Lobby) secondsUntilNextPhase() string {
 }
 
 func (lobby *Lobby) addPlayer(player Player) {
-	lobby.Players = append(lobby.Players, player)
+	lobby.Score = append(lobby.Score, Score{
+		Player: player,
+		Score:  0,
+	})
 }
 
 func getPlayerFromRequest(r *http.Request) *Player {
