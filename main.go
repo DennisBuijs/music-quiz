@@ -212,6 +212,7 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 
 		var message string
 		if guess == lobby.CurrentSong.Artist || guess == lobby.CurrentSong.Title {
+			lobby.addScore(player.ID, 1)
 			message = fmt.Sprintf("%s guessed correct!", player.Name)
 		} else {
 			message = fmt.Sprintf("%s guessed wrong!", player.Name)
@@ -288,7 +289,7 @@ func getPlayerFromRequest(r *http.Request) *Player {
 			//
 		}
 
-		err = json.Unmarshal([]byte(decodedCookieValue), &player)
+		err = json.Unmarshal(decodedCookieValue, &player)
 		if err != nil {
 			//
 		}
@@ -304,4 +305,13 @@ func generateRandomString(length int) string {
 	}
 
 	return fmt.Sprintf("%X", b)
+}
+
+func (lobby *Lobby) addScore(playerId string, pointsAmount int) {
+	for _, score := range lobby.Score {
+		if score.Player.ID == playerId {
+			score.Score += pointsAmount
+			return
+		}
+	}
 }
