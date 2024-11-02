@@ -214,6 +214,11 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		if guess == lobby.CurrentSong.Artist || guess == lobby.CurrentSong.Title {
 			lobby.addScore(player.ID, 1)
 			message = fmt.Sprintf("%s guessed correct!", player.Name)
+
+			server.Publish(lobby.Slug, &sse.Event{
+				Event: []byte("RefreshPlayers"),
+				Data:  []byte(""),
+			})
 		} else {
 			message = fmt.Sprintf("%s guessed wrong!", player.Name)
 		}
