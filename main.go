@@ -38,6 +38,7 @@ type Lobby struct {
 	CurrentPhaseEndAt time.Time
 	RoundsPlayed      int
 	Score             []*Score
+	SessionId         string
 }
 
 type Score struct {
@@ -46,8 +47,9 @@ type Score struct {
 }
 
 type Player struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	SessionID string `json:"sessionID"`
 }
 
 func main() {
@@ -65,11 +67,12 @@ func main() {
 	}
 
 	lobby := &Lobby{
-		Name:              "Carnavalskrakers",
-		Slug:              "carnavalskrakers",
+		Name:              "80's Hits",
+		Slug:              "80s-hits",
 		Songs:             songs,
 		CurrentPhaseEndAt: time.Now().Add(SONG_DURATION),
 		RoundsPlayed:      0,
+		SessionId:         generateRandomString(10),
 	}
 
 	server := sse.New()
@@ -119,8 +122,9 @@ func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		playerName := r.FormValue("name")
 
 		player := Player{
-			ID:   generateRandomString(10),
-			Name: playerName,
+			ID:        generateRandomString(10),
+			Name:      playerName,
+			SessionID: lobby.SessionId,
 		}
 
 		cookieValue, err := json.Marshal(player)
@@ -153,7 +157,7 @@ func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			return
 		}
 
-		player := getPlayerFromRequest(r)
+		player := lobby.getPlayerFromRequest(r)
 
 		data := struct {
 			LobbyName string
@@ -196,7 +200,7 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			return
 		}
 
-		player := getPlayerFromRequest(r)
+		player := lobby.getPlayerFromRequest(r)
 
 		tmpl, err := template.ParseFiles("./templates/guess-form.html")
 		if err != nil {
@@ -291,7 +295,7 @@ func (lobby *Lobby) addPlayer(player Player) {
 	})
 }
 
-func getPlayerFromRequest(r *http.Request) *Player {
+func (lobby *Lobby) getPlayerFromRequest(r *http.Request) *Player {
 	var player *Player
 	cookie, _ := r.Cookie("player")
 
@@ -304,6 +308,10 @@ func getPlayerFromRequest(r *http.Request) *Player {
 		err = json.Unmarshal(decodedCookieValue, &player)
 		if err != nil {
 			//
+		}
+
+		if player.SessionID != lobby.SessionId {
+			return nil
 		}
 	}
 
