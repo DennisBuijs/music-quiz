@@ -76,6 +76,8 @@ func main() {
 	}
 
 	server := sse.New()
+	server.BufferSize = 0
+	server.AutoReplay = false
 	go lobby.startLobby(server)
 
 	mux := http.NewServeMux()
