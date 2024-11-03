@@ -137,8 +137,11 @@ func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		}
 
 		cookie := http.Cookie{
-			Name:  "player",
-			Value: base64.StdEncoding.EncodeToString(cookieValue),
+			Name:     "player",
+			Value:    base64.StdEncoding.EncodeToString(cookieValue),
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
 		}
 
 		lobby.addPlayer(player)
