@@ -190,6 +190,7 @@
                     <label>
                         <input type="text" name="guess" placeholder="Enter your guess" autofocus>
                     </label>
+                    <button type="submit">Send</button>
                 </form>
             </footer>
         </div>
@@ -206,7 +207,8 @@
                 timerEl.textContent = timeLeft.toString().padStart(2, '0');
             }, 1000);
 
-            const chatContainer = document.querySelector("main");
+            const chatContainer = document.querySelector("main")
+
             let autoScrollEnabled = true;
 
             chatContainer.addEventListener('scroll', () => {
