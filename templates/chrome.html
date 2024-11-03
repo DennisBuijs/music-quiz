@@ -21,7 +21,7 @@
             .container {
                 height: 100vh;
                 display: grid;
-                grid-template-rows: max-content 1fr 90px;
+                grid-template-rows: max-content 1fr max-content;
             }
 
             header {
@@ -191,5 +191,28 @@
                 </form>
             </footer>
         </div>
+
+        <script>
+            const chatContainer = document.querySelector("main");
+            let autoScrollEnabled = true;
+
+            chatContainer.addEventListener('scroll', () => {
+                autoScrollEnabled = Math.abs(
+                    chatContainer.scrollHeight - chatContainer.clientHeight - chatContainer.scrollTop
+                ) < 1;
+            });
+
+            document.body.addEventListener('htmx:sseMessage', (e) => {
+                if (e.detail.type !== "Chat") {
+                    return;
+                }
+
+                if (!autoScrollEnabled) {
+                    return;
+                }
+
+                chatContainer.scrollTo(0, chatContainer.scrollHeight)
+            });
+        </script>
     </body>
 </html>
