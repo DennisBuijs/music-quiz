@@ -1,6 +1,0 @@
-name: music-quiz
-services:
-    - name: web
-      github:
-          repo: dennisbuijs/music-quiz
-          branch: main

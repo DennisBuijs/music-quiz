@@ -1,7 +1,0 @@
-spec:
-  name: music-quiz
-  services:
-    - name: web
-      git:
-        branch: main
-        repo_clone_url: https://github.com/dennisbuijs/music-quiz.git
