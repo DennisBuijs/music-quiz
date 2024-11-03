@@ -1,3 +1,5 @@
+<% require "dotenv"; Dotenv.load(".env") %>
+
 service: music-quiz
 image: dennisbuijs/music-quiz
 servers:
@@ -5,7 +7,7 @@ servers:
     - 104.248.83.99
 proxy:
   ssl: true
-  host: kipkron.dev
+  host: music-quiz.kipkron.dev
   app_port: 3000
 registry:
   username: dennisbuijs
