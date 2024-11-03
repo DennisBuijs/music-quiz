@@ -81,7 +81,7 @@ func main() {
 	go lobby.startLobby(server)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/asset/*", assetHandler())
+	mux.Handle("/asset/", assetHandler())
 	mux.HandleFunc("/", indexHandler(lobby))
 	mux.HandleFunc("/login", loginHandler(lobby, server))
 	mux.HandleFunc("/lobby", lobbyHandler(lobby, server))
@@ -360,10 +360,6 @@ func (song Song) asChatMessage() string {
 	return strings.ReplaceAll(message.String(), "\n", "")
 }
 
-func assetHandler() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		filePath := "./assets" + r.URL.Path[len("/asset"):]
-		fmt.Println(filePath)
-		http.ServeFile(w, r, filePath)
-	}
+func assetHandler() http.Handler {
+	return http.StripPrefix("/asset", http.FileServer(http.Dir("./assets")))
 }
