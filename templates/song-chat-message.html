@@ -1,0 +1,14 @@
+<div class="chat-message song">
+    <div class="art">
+        <img src="{{ .ArtUrl }}" alt="Album cover">
+    </div>
+    <div class="meta">
+        <div class="artist">{{ .Artist }}</div>
+        <div class="title">{{ .Title }}</div>
+    </div>
+    <div class="external">
+        <a href="{{ .ExternalUrl }}" target="_blank">
+            <img src="/asset/spotify.svg">
+        </a>
+    </div>
+</div>
