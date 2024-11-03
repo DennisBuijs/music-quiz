@@ -81,7 +81,7 @@ func main() {
 	go lobby.startLobby(server)
 
 	mux := http.NewServeMux()
-	mux.Handle("/asset/", assetHandler())
+	mux.HandleFunc("/asset/", assetHandler())
 	mux.HandleFunc("/", indexHandler(lobby))
 	mux.HandleFunc("/login", loginHandler(lobby, server))
 	mux.HandleFunc("/lobby", lobbyHandler(lobby, server))
@@ -379,6 +379,10 @@ func guessAsChatMessage(guess string) string {
 	return message.String()
 }
 
-func assetHandler() http.Handler {
-	return http.StripPrefix("/asset", http.FileServer(http.Dir("./assets")))
+func assetHandler() http.HandlerFunc {
+	fs := http.FileServer(http.Dir("./assets"))
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/asset")
+		fs.ServeHTTP(w, r)
+	}
 }
