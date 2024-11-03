@@ -167,6 +167,12 @@
 
         <script src="https://unpkg.com/htmx.org@2.0.3"></script>
         <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+
+        <script>
+            let timerEl;
+            let chatContainerEl;
+            let autoScrollEnabled;
+        </script>
     </head>
     <body>
         <div class="container"
@@ -197,7 +203,7 @@
         </div>
 
         <script>
-            const timerEl = document.querySelector('#timer');
+            timerEl = document.querySelector('#timer');
             setInterval(() => {
                 let timeLeft = parseInt(timerEl.textContent, 10) - 1 || -1;
 
@@ -213,13 +219,13 @@
                 timerEl.textContent = timeLeft.toString().padStart(2, '0');
             }, 1000);
 
-            const chatContainer = document.querySelector("main")
+            chatContainerEl = document.querySelector("main")
 
-            let autoScrollEnabled = true;
+            letautoScrollEnabled = true;
 
-            chatContainer.addEventListener('scroll', () => {
+            chatContainerEl.addEventListener('scroll', () => {
                 autoScrollEnabled = Math.abs(
-                    chatContainer.scrollHeight - chatContainer.clientHeight - chatContainer.scrollTop
+                    chatContainerEl.scrollHeight - chatContainerEl.clientHeight - chatContainerEl.scrollTop
                 ) < 1;
             });
 
@@ -232,7 +238,7 @@
                     return;
                 }
 
-                chatContainer.scrollTo(0, chatContainer.scrollHeight)
+                chatContainerEl.scrollTo(0, chatContainerEl.scrollHeight)
             });
         </script>
     </body>
