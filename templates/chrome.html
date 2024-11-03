@@ -16,26 +16,33 @@
                 font-family: sans-serif;
                 color: #121212;
                 height: 100vh;
+            }
 
+            .container {
+                height: 100vh;
                 display: grid;
-                grid-template-rows: max-content 1fr max-content;
+                grid-template-rows: max-content 1fr 90px;
             }
 
             header {
-                background-color: whitesmoke;
-                padding-inline: 1rem;
+                background-color: #00716b;
+                padding: 1rem;
+                color: white;
+            }
+
+            main {
+                overflow: auto;
             }
 
             footer {
                 padding: 1rem;
+                background: whitesmoke;
             }
 
             .phase {
                 display: grid;
                 grid-template-columns: 3fr 1fr;
                 font-size: 1.5rem;
-                background-color: whitesmoke;
-                padding: 0 1rem 1rem;
             }
 
             #timer {
@@ -44,11 +51,10 @@
             }
 
             #player-list {
-                background-color: whitesmoke;
                 display: flex;
 
                 div {
-                    padding: .5rem 1rem 1rem;
+                    padding: 1rem 1rem 0 0;
                     display: flex;
                     align-items: center;
 
@@ -73,10 +79,6 @@
                 }
             }
 
-            #messages {
-                overflow: auto;
-            }
-
             .chat-message {
                 height: 48px;
                 display: flex;
@@ -84,7 +86,7 @@
                 padding: .5rem 1rem;
 
                 &:nth-child(even) {
-                    background: #f6f6f6;
+                    background: rgba(0, 113, 107, .04);
                 }
             }
 
@@ -92,9 +94,12 @@
                 font: inherit;
                 font-size: 1.125rem;
                 padding: 1rem;
-                background-color: whitesmoke;
-                border: 2px solid #111;
+                border: 2px solid #121212;
                 border-radius: .25rem;
+
+                &:focus {
+                    outline-color: #00716b;
+                }
             }
 
             input, audio {
@@ -140,6 +145,10 @@
                     }
                 }
             }
+
+            h1 {
+                margin-block: .5rem 1rem;
+            }
         </style>
 
         <script src="https://unpkg.com/htmx.org@2.0.3"></script>
@@ -159,16 +168,28 @@
         </script>
     </head>
     <body>
-        <header>
-            <h1>Music Quiz</h1>
-        </header>
-        <main hx-get="/lobby" hx-trigger="load">Loading lobby...</main>
-        <footer>
-            <form hx-post="/guess" hx-target="this" hx-swap="outerHTML">
-                <label>
-                    <input type="text" name="guess" placeholder="Enter your guess" autofocus>
-                </label>
-            </form>
-        </footer>
+        <div class="container" hx-ext="sse"
+             sse-connect="/events?stream={{ .LobbySlug }}">
+            <header>
+                <h1>Music Quiz</h1>
+                <div class="phase">
+                    <div class="audio-container"
+                         sse-swap="CurrentSong"
+                         class="audio-container">
+                    </div>
+                    <div id="timer" sse-swap="Timer">--</div>
+                </div>
+
+                <div id="player-list" hx-get="/players" hx-trigger="load, sse:RefreshPlayers"></div>
+            </header>
+            <main hx-get="/lobby" hx-trigger="load">Loading lobby...</main>
+            <footer>
+                <form hx-post="/guess" hx-target="this" hx-swap="outerHTML">
+                    <label>
+                        <input type="text" name="guess" placeholder="Enter your guess" autofocus>
+                    </label>
+                </form>
+            </footer>
+        </div>
     </body>
 </html>

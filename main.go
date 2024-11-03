@@ -106,9 +106,11 @@ func indexHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data := struct {
-			AudioUrl string
+			LobbySlug string
+			AudioUrl  string
 		}{
-			AudioUrl: song.AudioUrl,
+			LobbySlug: lobby.Slug,
+			AudioUrl:  song.AudioUrl,
 		}
 
 		if err := tmpl.Execute(w, data); err != nil {
@@ -253,7 +255,7 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("CurrentSong"),
-			Data:  []byte("Guess!<audio autoplay src=\"" + song.AudioUrl + "\">"),
+			Data:  []byte("Guess!<audio src=\"" + song.AudioUrl + "\">"),
 		})
 
 		server.Publish(lobby.Slug, &sse.Event{
