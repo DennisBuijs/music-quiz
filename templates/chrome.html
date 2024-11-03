@@ -178,8 +178,9 @@
                     <div class="audio-container"
                          sse-swap="CurrentSong"
                          class="audio-container">
+                        Waiting for next round...
                     </div>
-                    <div id="timer" sse-swap="Timer">--</div>
+                    <div id="timer" sse-swap="Timer"></div>
                 </div>
 
                 <div id="player-list" hx-get="/players" hx-trigger="load, sse:RefreshPlayers"></div>
@@ -196,9 +197,14 @@
         </div>
 
         <script>
+            const timerEl = document.querySelector('#timer');
             setInterval(() => {
-                const timerEl = document.querySelector('#timer');
-                let timeLeft = parseInt(timerEl.textContent, 10) - 1;
+                let timeLeft = parseInt(timerEl.textContent, 10) - 1 || -1;
+
+                if (timeLeft === -1) {
+                    timerEl.textContent = "";
+                    return;
+                }
 
                 if (timeLeft === 0) {
                     timeLeft = 1;
