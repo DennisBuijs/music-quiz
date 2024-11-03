@@ -234,9 +234,11 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			message = fmt.Sprintf("%s guessed wrong!", player.Name)
 		}
 
+		chatMessage := guessAsChatMessage(message)
+
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("Chat"),
-			Data:  []byte("<div class=\"chat-message\">" + message + "</div>"),
+			Data:  []byte(chatMessage),
 		})
 	}
 }
@@ -358,6 +360,23 @@ func (song Song) asChatMessage() string {
 	}
 
 	return strings.ReplaceAll(message.String(), "\n", "")
+}
+
+func guessAsChatMessage(guess string) string {
+	tmpl, err := template.ParseFiles("./templates/guess-chat-message.html")
+	if err != nil {
+		fmt.Println("[SERVER] error loading template")
+		return ""
+	}
+
+	var message bytes.Buffer
+	err = tmpl.Execute(&message, guess)
+	if err != nil {
+		fmt.Println("[SERVER] error parsing template")
+		return ""
+	}
+
+	return message.String()
 }
 
 func assetHandler() http.Handler {
