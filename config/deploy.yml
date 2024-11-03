@@ -1,0 +1,15 @@
+service: music-quiz
+image: dennisbuijs/music-quiz
+servers:
+  web:
+    - 104.248.83.99
+proxy:
+  ssl: true
+  host: kipkron.dev
+  app_port: 3000
+registry:
+  username: dennisbuijs
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+builder:
+  arch: amd64
