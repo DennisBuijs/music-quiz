@@ -89,7 +89,7 @@ func main() {
 	mux.HandleFunc("/events", server.ServeHTTP)
 
 	fmt.Printf("[SERVER] starting lobby [%s] on :3000\n", lobby.Name)
-	err = http.ListenAndServe("localhost:3000", mux)
+	err = http.ListenAndServe("0.0.0.0:3000", mux)
 	if err != nil {
 		log.Panic("[SERVER] could not start server")
 	}
@@ -255,7 +255,7 @@ func (lobby *Lobby) startLobby(server *sse.Server) {
 
 		server.Publish(lobby.Slug, &sse.Event{
 			Event: []byte("CurrentSong"),
-			Data:  []byte("Guess!<audio src=\"" + song.AudioUrl + "\">"),
+			Data:  []byte("Guess!<audio autoplay src=\"" + song.AudioUrl + "\">"),
 		})
 
 		server.Publish(lobby.Slug, &sse.Event{

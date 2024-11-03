@@ -15,11 +15,11 @@
                 margin: 0;
                 font-family: sans-serif;
                 color: #121212;
-                height: 100vh;
+                height: 100svh;
             }
 
             .container {
-                height: 100vh;
+                height: 100%;
                 display: grid;
                 grid-template-rows: max-content 1fr max-content;
             }
@@ -153,22 +153,10 @@
 
         <script src="https://unpkg.com/htmx.org@2.0.3"></script>
         <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
-
-        <script>
-            setInterval(() => {
-                const timerEl = document.querySelector('#timer');
-                let timeLeft = parseInt(timerEl.textContent, 10) - 1;
-
-                if (timeLeft === 0) {
-                    timeLeft = 1;
-                }
-
-                timerEl.textContent = timeLeft.toString().padStart(2, '0');
-            }, 1000);
-        </script>
     </head>
     <body>
-        <div class="container" hx-ext="sse"
+        <div class="container"
+             hx-ext="sse"
              sse-connect="/events?stream={{ .LobbySlug }}">
             <header>
                 <h1>Music Quiz</h1>
@@ -193,6 +181,17 @@
         </div>
 
         <script>
+            setInterval(() => {
+                const timerEl = document.querySelector('#timer');
+                let timeLeft = parseInt(timerEl.textContent, 10) - 1;
+
+                if (timeLeft === 0) {
+                    timeLeft = 1;
+                }
+
+                timerEl.textContent = timeLeft.toString().padStart(2, '0');
+            }, 1000);
+
             const chatContainer = document.querySelector("main");
             let autoScrollEnabled = true;
 
