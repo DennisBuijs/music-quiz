@@ -13,7 +13,6 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
@@ -39,6 +38,7 @@ type Lobby struct {
 	RoundsPlayed      int
 	Score             []*Score
 	SessionId         string
+	PlaylistId        string
 }
 
 type Score struct {
@@ -53,27 +53,16 @@ type Player struct {
 }
 
 func main() {
-	songData, err := os.ReadFile("songs.json")
-	if err != nil {
-		fmt.Println("[SERVER] error loading songs.json")
-		return
-	}
-
-	var songs []Song
-	err = json.Unmarshal(songData, &songs)
-	if err != nil {
-		fmt.Println("[SERVER] error parsing songs.json")
-		return
-	}
-
 	lobby := &Lobby{
-		Name:              "80's Hits",
-		Slug:              "80s-hits",
-		Songs:             songs,
+		Name:              "Pop Hits",
+		Slug:              "pop-hits",
+		PlaylistId:        "2dnGUVwVbvNEylkmmtisXU",
 		CurrentPhaseEndAt: time.Now().Add(SONG_DURATION),
 		RoundsPlayed:      0,
 		SessionId:         generateRandomString(10),
 	}
+
+	lobby.Songs = GetSongs(lobby.PlaylistId)
 
 	server := sse.New()
 	server.BufferSize = 0
@@ -91,7 +80,7 @@ func main() {
 	mux.HandleFunc("/events", server.ServeHTTP)
 
 	fmt.Printf("[SERVER] starting lobby [%s] on :3000\n", lobby.Name)
-	err = http.ListenAndServe("0.0.0.0:3000", mux)
+	err := http.ListenAndServe("0.0.0.0:3000", mux)
 	if err != nil {
 		log.Panic("[SERVER] could not start server")
 	}
