@@ -79,7 +79,7 @@ func main() {
 
 	mux.HandleFunc("/events", server.ServeHTTP)
 
-	fmt.Printf("[SERVER] starting lobby [%s] on :3000\n", lobby.Name)
+	fmt.Printf("[SERVER] starting lobby [%s] (%v songs)\n", lobby.Name, len(lobby.Songs))
 	err := http.ListenAndServe("0.0.0.0:3000", mux)
 	if err != nil {
 		log.Panic("[SERVER] could not start server")
