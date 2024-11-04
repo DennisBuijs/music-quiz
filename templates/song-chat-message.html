@@ -1,6 +1,6 @@
 <div class="chat-message song">
     <div class="art">
-        <img src="{{ .ArtUrl }}" alt="Album cover">
+        <img src="{{ .ArtUrl }}" alt="">
     </div>
     <div class="meta">
         <div class="artist">{{ .Artist }}</div>
@@ -8,7 +8,7 @@
     </div>
     <div class="external">
         <a href="{{ .ExternalUrl }}" target="_blank">
-            <img src="/asset/spotify.svg">
+            <img src="/asset/spotify.svg" alt="" title="Play {{ .Title }} by {{ .Artist }} on Spotify">
         </a>
     </div>
 </div>
