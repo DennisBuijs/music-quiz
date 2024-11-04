@@ -131,6 +131,7 @@ func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			Secure:   true,
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
+			MaxAge:   int((10 * time.Minute).Seconds()),
 		}
 
 		lobby.addPlayer(player)
@@ -153,7 +154,7 @@ func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			return
 		}
 
-		player := lobby.getPlayerFromRequest(r)
+		player := lobby.getPlayerFromRequest(w, r)
 
 		data := struct {
 			LobbyName string
@@ -196,7 +197,7 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			return
 		}
 
-		player := lobby.getPlayerFromRequest(r)
+		player := lobby.getPlayerFromRequest(w, r)
 
 		tmpl, err := template.ParseFiles("./templates/guess-form.html")
 		if err != nil {
@@ -293,7 +294,7 @@ func (lobby *Lobby) addPlayer(player Player) {
 	})
 }
 
-func (lobby *Lobby) getPlayerFromRequest(r *http.Request) *Player {
+func (lobby *Lobby) getPlayerFromRequest(w http.ResponseWriter, r *http.Request) *Player {
 	var player *Player
 	cookie, _ := r.Cookie("player")
 
@@ -312,6 +313,17 @@ func (lobby *Lobby) getPlayerFromRequest(r *http.Request) *Player {
 			return nil
 		}
 	}
+
+	newCookie := http.Cookie{
+		Name:     "player",
+		Value:    cookie.Value,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   int((10 * time.Minute).Seconds()),
+	}
+
+	http.SetCookie(w, &newCookie)
 
 	return player
 }
