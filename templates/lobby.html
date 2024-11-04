@@ -2,7 +2,6 @@
      sse-swap="Chat"
      hx-swap="beforeend">
 </div>
-</div>
 
 {{ if not .Player }}
 <style>
@@ -39,4 +38,25 @@
     </form>
 </dialog>
 <script>document.getElementById('player-dialog').showModal()</script>
+{{ else }}
+<style>
+    h3 {
+        margin: 0;
+    }
+
+    p {
+        margin: 1rem 0 2rem;
+    }
+
+    button {
+        font-size: 1.25rem;
+        float: right;
+    }
+</style>
+<dialog id="welcome-dialog">
+    <h3>Welcome, {{ .Player.Name }}!</h3>
+    <p>Have fun!</p>
+    <button onclick="document.getElementById('welcome-dialog').close()">Continue</button>
+</dialog>
+<script>document.getElementById('welcome-dialog').showModal()</script>
 {{ end }}
