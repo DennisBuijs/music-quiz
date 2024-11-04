@@ -180,6 +180,7 @@
 
         <script>
             let timerEl;
+            let timerInterval;
             let chatContainerEl;
             let autoScrollEnabled;
         </script>
@@ -214,7 +215,11 @@
 
         <script>
             timerEl = document.querySelector('#timer');
-            setInterval(() => {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            timerInterval = setInterval(() => {
                 let timeLeft = parseInt(timerEl.textContent, 10) - 1 || -1;
 
                 if (timeLeft === -1) {
