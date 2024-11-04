@@ -198,6 +198,10 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		}
 
 		player := lobby.getPlayerFromRequest(w, r)
+		if player == nil {
+			w.Header().Add("HX-Refresh", "true")
+			return
+		}
 
 		tmpl, err := template.ParseFiles("./templates/guess-form.html")
 		if err != nil {
@@ -312,18 +316,18 @@ func (lobby *Lobby) getPlayerFromRequest(w http.ResponseWriter, r *http.Request)
 		if player.SessionID != lobby.SessionId {
 			return nil
 		}
-	}
 
-	newCookie := http.Cookie{
-		Name:     "player",
-		Value:    cookie.Value,
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		MaxAge:   int((10 * time.Minute).Seconds()),
-	}
+		newCookie := http.Cookie{
+			Name:     "player",
+			Value:    cookie.Value,
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+			MaxAge:   int((10 * time.Minute).Seconds()),
+		}
 
-	http.SetCookie(w, &newCookie)
+		http.SetCookie(w, &newCookie)
+	}
 
 	return player
 }
