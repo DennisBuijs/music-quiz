@@ -15,3 +15,7 @@ registry:
     - KAMAL_REGISTRY_PASSWORD
 builder:
   arch: amd64
+env:
+  secret:
+    - SPOTIFY_CLIENT_ID
+    - SPOTIFY_CLIENT_SECRET
