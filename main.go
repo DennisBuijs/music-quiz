@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode"
 )
 
 var SONG_DURATION = 30 * time.Second
@@ -213,10 +214,10 @@ func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		guess := r.FormValue("guess")
+		guess := normalizeString(r.FormValue("guess"))
 
 		var message string
-		if guess == lobby.CurrentSong.Artist || guess == lobby.CurrentSong.Title {
+		if guess == normalizeString(lobby.CurrentSong.Artist) || guess == normalizeString(lobby.CurrentSong.Title) {
 			lobby.addScore(player.ID, 1)
 			message = fmt.Sprintf("%s guessed correct!", player.Name)
 
@@ -390,4 +391,16 @@ func assetHandler() http.HandlerFunc {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/asset")
 		fs.ServeHTTP(w, r)
 	}
+}
+
+func normalizeString(input string) string {
+	var stringBuilder strings.Builder
+
+	for _, r := range strings.ToLower(input) {
+		if unicode.IsLetter(r) || unicode.IsNumber(r) {
+			stringBuilder.WriteRune(r)
+		}
+	}
+
+	return stringBuilder.String()
 }
