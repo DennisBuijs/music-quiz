@@ -20,6 +20,7 @@ import (
 
 var SONG_DURATION = 30 * time.Second
 var BREAK_DURATION = 5 * time.Second
+var PLAYER_SESSION_DURATION = 10 * time.Minute
 
 type Song struct {
 	ID          string `json:"id"`
@@ -48,8 +49,9 @@ type Score struct {
 }
 
 type Player struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	SessionExpireAt time.Time
 }
 
 func main() {
@@ -115,8 +117,9 @@ func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		playerName := r.FormValue("name")
 
 		player := Player{
-			ID:   generateRandomString(10),
-			Name: playerName,
+			ID:              generateRandomString(10),
+			Name:            playerName,
+			SessionExpireAt: time.Now().Add(PLAYER_SESSION_DURATION),
 		}
 
 		cookieValue, err := json.Marshal(player)
@@ -130,7 +133,7 @@ func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 			Secure:   true,
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
-			MaxAge:   int((10 * time.Minute).Seconds()),
+			MaxAge:   int(PLAYER_SESSION_DURATION.Seconds()),
 		}
 
 		lobby.addPlayer(player)
@@ -312,13 +315,15 @@ func (lobby *Lobby) getPlayerFromRequest(w http.ResponseWriter, r *http.Request)
 			//
 		}
 
+		player.SessionExpireAt = time.Now().Add(PLAYER_SESSION_DURATION)
+
 		newCookie := http.Cookie{
 			Name:     lobby.SessionId,
 			Value:    cookie.Value,
 			Secure:   true,
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
-			MaxAge:   int((10 * time.Minute).Seconds()),
+			MaxAge:   int((PLAYER_SESSION_DURATION).Seconds()),
 		}
 
 		http.SetCookie(w, &newCookie)
