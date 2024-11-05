@@ -81,6 +81,8 @@ func main() {
 
 	mux.HandleFunc("/events", server.ServeHTTP)
 
+	go lobby.startSessionExpiryTicker()
+
 	fmt.Printf("[SERVER] starting lobby [%s] (%v songs)\n", lobby.Name, len(lobby.Songs))
 	err := http.ListenAndServe("0.0.0.0:3000", mux)
 	if err != nil {
@@ -402,4 +404,27 @@ func normalizeString(input string) string {
 	}
 
 	return stringBuilder.String()
+}
+
+func (lobby *Lobby) startSessionExpiryTicker() {
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		<-ticker.C
+		fmt.Println("[SERVER] kicking inactive players")
+
+		now := time.Now()
+		var activeScores []*Score
+
+		for _, score := range lobby.Score {
+			if score.Player.SessionExpireAt.After(now) {
+				activeScores = append(activeScores, score)
+			} else {
+				fmt.Printf("[SERVER] kicked inactive player [%s]\n", score.Player.Name)
+			}
+		}
+
+		lobby.Score = activeScores
+	}
 }
