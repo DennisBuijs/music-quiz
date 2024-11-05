@@ -214,7 +214,7 @@
         </div>
 
         <script>
-            timerEl = document.querySelector('#timer');
+            timerEl = document.querySelector("#timer");
             if (timerInterval) {
                 clearInterval(timerInterval);
             }
@@ -231,20 +231,20 @@
                     timeLeft = 1;
                 }
 
-                timerEl.textContent = timeLeft.toString().padStart(2, '0');
+                timerEl.textContent = timeLeft.toString().padStart(2, "0");
             }, 1000);
 
             chatContainerEl = document.querySelector("main")
 
             letautoScrollEnabled = true;
 
-            chatContainerEl.addEventListener('scroll', () => {
+            chatContainerEl.addEventListener("scroll", () => {
                 autoScrollEnabled = Math.abs(
                     chatContainerEl.scrollHeight - chatContainerEl.clientHeight - chatContainerEl.scrollTop
                 ) < 1;
             });
 
-            document.body.addEventListener('htmx:sseMessage', (e) => {
+            document.body.addEventListener("htmx:sseMessage", (e) => {
                 if (e.detail.type !== "Chat") {
                     return;
                 }
