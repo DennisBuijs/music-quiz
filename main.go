@@ -13,6 +13,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 	"unicode"
@@ -188,6 +189,8 @@ func playersHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		sortScores(lobby.Score)
 
 		if err := tmpl.Execute(w, lobby.Score); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -432,4 +435,10 @@ func (lobby *Lobby) startSessionExpiryTicker(server *sse.Server) {
 
 		lobby.Score = activeScores
 	}
+}
+
+func sortScores(scoreList []*Score) {
+	sort.Slice(scoreList, func(i, j int) bool {
+		return scoreList[i].Score > scoreList[j].Score
+	})
 }
