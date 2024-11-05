@@ -48,9 +48,8 @@ type Score struct {
 }
 
 type Player struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	SessionID string `json:"sessionID"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 func main() {
@@ -116,9 +115,8 @@ func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		playerName := r.FormValue("name")
 
 		player := Player{
-			ID:        generateRandomString(10),
-			Name:      playerName,
-			SessionID: lobby.SessionId,
+			ID:   generateRandomString(10),
+			Name: playerName,
 		}
 
 		cookieValue, err := json.Marshal(player)
@@ -127,7 +125,7 @@ func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		}
 
 		cookie := http.Cookie{
-			Name:     "player",
+			Name:     lobby.SessionId,
 			Value:    base64.StdEncoding.EncodeToString(cookieValue),
 			Secure:   true,
 			HttpOnly: true,
@@ -301,7 +299,7 @@ func (lobby *Lobby) addPlayer(player Player) {
 
 func (lobby *Lobby) getPlayerFromRequest(w http.ResponseWriter, r *http.Request) *Player {
 	var player *Player
-	cookie, _ := r.Cookie("player")
+	cookie, _ := r.Cookie(lobby.SessionId)
 
 	if cookie != nil {
 		decodedCookieValue, err := base64.StdEncoding.DecodeString(cookie.Value)
@@ -314,12 +312,8 @@ func (lobby *Lobby) getPlayerFromRequest(w http.ResponseWriter, r *http.Request)
 			//
 		}
 
-		if player.SessionID != lobby.SessionId {
-			return nil
-		}
-
 		newCookie := http.Cookie{
-			Name:     "player",
+			Name:     lobby.SessionId,
 			Value:    cookie.Value,
 			Secure:   true,
 			HttpOnly: true,
