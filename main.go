@@ -5,6 +5,7 @@ import (
 	cryptoRand "crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/r3labs/sse/v2"
 	_ "github.com/r3labs/sse/v2"
@@ -55,46 +56,63 @@ type Player struct {
 	SessionExpireAt time.Time
 }
 
-func main() {
-	lobby := &Lobby{
+var lobbies = []*Lobby{
+	{
 		Name:              "Pop Hits",
 		Slug:              "pop-hits",
 		PlaylistId:        "2dnGUVwVbvNEylkmmtisXU",
 		CurrentPhaseEndAt: time.Now().Add(SONG_DURATION),
 		RoundsPlayed:      0,
 		SessionId:         generateRandomString(10),
-	}
+	},
+	{
+		Name:              "Rock Hits",
+		Slug:              "rock-hits",
+		PlaylistId:        "1wsviG3Nxib2MWIKNG7Dg6",
+		CurrentPhaseEndAt: time.Now().Add(SONG_DURATION),
+		RoundsPlayed:      0,
+		SessionId:         generateRandomString(10),
+	},
+}
 
-	lobby.Songs = GetSongs(lobby.PlaylistId)
-
+func main() {
 	server := sse.New()
 	server.BufferSize = 0
 	server.AutoReplay = false
-	go lobby.startLobby(server)
+
+	for _, lobby := range lobbies {
+		lobby.Songs = GetSongs(lobby.PlaylistId)
+		go lobby.startLobby(server)
+		go lobby.startSessionExpiryTicker(server)
+	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/asset/", assetHandler())
-	mux.HandleFunc("/", indexHandler(lobby))
-	mux.HandleFunc("/login", loginHandler(lobby, server))
-	mux.HandleFunc("/lobby", lobbyHandler(lobby, server))
-	mux.HandleFunc("/players", playersHandler(lobby))
-	mux.HandleFunc("POST /guess", guessHandler(lobby, server))
+	mux.HandleFunc("/lobby/{lobbySlug}", indexHandler())
+	mux.HandleFunc("/lobby/{lobbySlug}/login", loginHandler(server))
+	mux.HandleFunc("/lobby/{lobbySlug}/lobby", lobbyHandler(server))
+	mux.HandleFunc("/lobby/{lobbySlug}/players", playersHandler())
+	mux.HandleFunc("POST /lobby/{lobbySlug}/guess", guessHandler(server))
 
+	mux.HandleFunc("/asset/", assetHandler())
 	mux.HandleFunc("/events", server.ServeHTTP)
 
-	go lobby.startSessionExpiryTicker(server)
-
-	fmt.Printf("[SERVER] starting lobby [%s] (%v songs)\n", lobby.Name, len(lobby.Songs))
+	fmt.Println("[SERVER] starting server")
 	err := http.ListenAndServe("0.0.0.0:3000", mux)
 	if err != nil {
 		log.Panic("[SERVER] could not start server")
 	}
 }
 
-func indexHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
-	song := lobby.Songs[0]
-
+func indexHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		slug := r.PathValue("lobbySlug")
+		lobby, err := getLobbyBySlug(slug)
+		if err != nil {
+			// 404
+		}
+
+		song := lobby.Songs[0]
+
 		tmpl, err := template.ParseFiles("./templates/chrome.html")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -115,8 +133,14 @@ func indexHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
+func loginHandler(server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		slug := r.PathValue("lobbySlug")
+		lobby, err := getLobbyBySlug(slug)
+		if err != nil {
+			// 404
+		}
+
 		playerName := r.FormValue("name")
 
 		player := Player{
@@ -147,12 +171,18 @@ func loginHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 		})
 
 		http.SetCookie(w, &cookie)
-		http.Redirect(w, r, "/", http.StatusFound)
+		http.Redirect(w, r, "/lobby/"+lobby.Slug, http.StatusFound)
 	}
 }
 
-func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
+func lobbyHandler(server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		slug := r.PathValue("lobbySlug")
+		lobby, err := getLobbyBySlug(slug)
+		if err != nil {
+			// 404
+		}
+
 		tmpl, err := template.ParseFiles("./templates/lobby.html")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -182,8 +212,14 @@ func lobbyHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, 
 	}
 }
 
-func playersHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
+func playersHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		slug := r.PathValue("lobbySlug")
+		lobby, err := getLobbyBySlug(slug)
+		if err != nil {
+			// 404
+		}
+
 		tmpl, err := template.ParseFiles("./templates/players.html")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -198,10 +234,16 @@ func playersHandler(lobby *Lobby) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func guessHandler(lobby *Lobby, server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
+func guessHandler(server *sse.Server) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			return
+		}
+
+		slug := r.PathValue("lobbySlug")
+		lobby, err := getLobbyBySlug(slug)
+		if err != nil {
+			// 404
 		}
 
 		player := lobby.getPlayerFromRequest(w, r)
@@ -441,4 +483,14 @@ func sortScores(scoreList []*Score) {
 	sort.Slice(scoreList, func(i, j int) bool {
 		return scoreList[i].Score > scoreList[j].Score
 	})
+}
+
+func getLobbyBySlug(slug string) (*Lobby, error) {
+	for _, lobby := range lobbies {
+		if lobby.Slug == slug {
+			return lobby, nil
+		}
+	}
+
+	return nil, errors.New("Lobby not found")
 }

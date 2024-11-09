@@ -200,11 +200,11 @@
                     <div id="timer" sse-swap="Timer"></div>
                 </div>
 
-                <div id="player-list" hx-get="/players" hx-trigger="load, sse:RefreshPlayers"></div>
+                <div id="player-list" hx-get="/lobby/{{ .LobbySlug }}/players" hx-trigger="load, sse:RefreshPlayers"></div>
             </header>
-            <main hx-get="/lobby" hx-trigger="load">Loading lobby...</main>
+            <main hx-get="/lobby/{{ .LobbySlug }}/lobby" hx-trigger="load">Loading lobby...</main>
             <footer>
-                <form hx-post="/guess" hx-target="this" hx-swap="outerHTML">
+                <form hx-post="/lobby/{{ .LobbySlug }}/guess" hx-target="this" hx-swap="outerHTML">
                     <label>
                         <input type="text" name="guess" placeholder="Enter your guess" autofocus
                                autocomplete="off">

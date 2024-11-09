@@ -29,7 +29,7 @@
 </style>
 
 <dialog id="player-dialog">
-    <form hx-post="/login" hx-target="body">
+    <form hx-post="/lobby/{{ .LobbySlug }}/login" hx-target="body">
         <label>
             <span>Your name</span>
             <input type="text" name="name">
