@@ -87,6 +87,7 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/", homeHandler())
 	mux.HandleFunc("/lobby/{lobbySlug}", indexHandler())
 	mux.HandleFunc("/lobby/{lobbySlug}/login", loginHandler(server))
 	mux.HandleFunc("/lobby/{lobbySlug}/lobby", lobbyHandler(server))
@@ -102,6 +103,20 @@ func main() {
 	err := http.ListenAndServe("0.0.0.0:3000", mux)
 	if err != nil {
 		log.Panic("[SERVER] could not start server")
+	}
+}
+
+func homeHandler() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFiles("./templates/home.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err := tmpl.Execute(w, lobbies); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
