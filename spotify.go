@@ -11,7 +11,13 @@ import (
     "github.com/joho/godotenv"
 )
 
-func GetSongs(playlistId string) []Song {
+type PlaylistDetails struct {
+    Name     string
+    ImageUrl string
+    Songs    []Song
+}
+
+func GetPlaylistDetails(playlistId string) PlaylistDetails {
     if err := godotenv.Load(".env"); err != nil {
         log.Fatalf("Error loading .env file: %v", err)
     }
@@ -24,7 +30,7 @@ func GetSongs(playlistId string) []Song {
         log.Fatalf("Error getting access token: %v", err)
     }
 
-    songs, err := getSongsFromPlaylist(accessToken, playlistId)
+    songs, err := getDataFromPlaylist(accessToken, playlistId)
     if err != nil {
         log.Fatalf("Error fetching songs from playlist: %v", err)
     }
@@ -62,22 +68,26 @@ func getAccessToken(clientID, clientSecret string) (string, error) {
     return token, nil
 }
 
-func getSongsFromPlaylist(accessToken, playlistID string) ([]Song, error) {
-    url := fmt.Sprintf("https://api.spotify.com/v1/playlists/%s?fields=tracks.items(track(id,name,href,artists(name),external_urls.spotify,album.images(url,width),preview_url)", playlistID)
+func getDataFromPlaylist(accessToken, playlistID string) (PlaylistDetails, error) {
+    url := fmt.Sprintf("https://api.spotify.com/v1/playlists/%s?fields=name,images(url),tracks.items(track(id,name,href,artists(name),external_urls.spotify,album.images(url,width),preview_url)", playlistID)
     req, err := http.NewRequest(http.MethodGet, url, nil)
     if err != nil {
-        return nil, fmt.Errorf("failed to create request: %w", err)
+        return PlaylistDetails{}, fmt.Errorf("failed to create request: %w", err)
     }
     req.Header.Set("Authorization", "Bearer "+accessToken)
 
     client := http.DefaultClient
     res, err := client.Do(req)
     if err != nil {
-        return nil, fmt.Errorf("failed to send request: %w", err)
+        return PlaylistDetails{}, fmt.Errorf("failed to send request: %w", err)
     }
     defer res.Body.Close()
 
     var response struct {
+        Name   string `json:"name"`
+        Images []struct {
+            URL string `json:"url"`
+        } `json:"images"`
         Tracks struct {
             Items []struct {
                 Track struct {
@@ -93,7 +103,7 @@ func getSongsFromPlaylist(accessToken, playlistID string) ([]Song, error) {
     }
 
     if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-        return nil, fmt.Errorf("failed to decode response: %w", err)
+        return PlaylistDetails{}, fmt.Errorf("failed to decode response: %w", err)
     }
 
     var songs []Song
@@ -125,5 +135,14 @@ func getSongsFromPlaylist(accessToken, playlistID string) ([]Song, error) {
         songs = append(songs, song)
     }
 
-    return songs, nil
+    imageUrl := ""
+    if len(response.Images) > 0 {
+        imageUrl = response.Images[0].URL
+    }
+
+    return PlaylistDetails{
+        Name:     response.Name,
+        ImageUrl: imageUrl,
+        Songs:    songs,
+    }, nil
 }

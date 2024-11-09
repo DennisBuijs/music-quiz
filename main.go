@@ -43,6 +43,7 @@ type Lobby struct {
 	Score             []*Score
 	SessionId         string
 	PlaylistId        string
+	ImageUrl          string
 }
 
 type Score struct {
@@ -81,7 +82,9 @@ func main() {
 	server.AutoReplay = false
 
 	for _, lobby := range lobbies {
-		lobby.Songs = GetSongs(lobby.PlaylistId)
+		playlistDetails := GetPlaylistDetails(lobby.PlaylistId)
+		lobby.ImageUrl = playlistDetails.ImageUrl
+		lobby.Songs = playlistDetails.Songs
 		go lobby.startLobby(server)
 		go lobby.startSessionExpiryTicker(server)
 	}
