@@ -283,7 +283,13 @@ func guessHandler(server *sse.Server) func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		if err := tmpl.Execute(w, nil); err != nil {
+		data := struct {
+			LobbySlug string
+		}{
+			LobbySlug: lobby.Slug,
+		}
+
+		if err := tmpl.Execute(w, data); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
