@@ -93,6 +93,8 @@ func main() {
 	mux.HandleFunc("/lobby/{lobbySlug}/players", playersHandler())
 	mux.HandleFunc("POST /lobby/{lobbySlug}/guess", guessHandler(server))
 
+	mux.HandleFunc("/not-found", notFoundHandler())
+
 	mux.HandleFunc("/asset/", assetHandler())
 	mux.HandleFunc("/events", server.ServeHTTP)
 
@@ -108,7 +110,8 @@ func indexHandler() func(w http.ResponseWriter, r *http.Request) {
 		slug := r.PathValue("lobbySlug")
 		lobby, err := getLobbyBySlug(slug)
 		if err != nil {
-			// 404
+			http.Redirect(w, r, "/not-found", http.StatusSeeOther)
+			return
 		}
 
 		song := lobby.Songs[0]
@@ -138,7 +141,8 @@ func loginHandler(server *sse.Server) func(w http.ResponseWriter, r *http.Reques
 		slug := r.PathValue("lobbySlug")
 		lobby, err := getLobbyBySlug(slug)
 		if err != nil {
-			// 404
+			http.Redirect(w, r, "/not-found", http.StatusSeeOther)
+			return
 		}
 
 		playerName := r.FormValue("name")
@@ -180,7 +184,8 @@ func lobbyHandler(server *sse.Server) func(w http.ResponseWriter, r *http.Reques
 		slug := r.PathValue("lobbySlug")
 		lobby, err := getLobbyBySlug(slug)
 		if err != nil {
-			// 404
+			http.Redirect(w, r, "/not-found", http.StatusSeeOther)
+			return
 		}
 
 		tmpl, err := template.ParseFiles("./templates/lobby.html")
@@ -217,7 +222,8 @@ func playersHandler() func(w http.ResponseWriter, r *http.Request) {
 		slug := r.PathValue("lobbySlug")
 		lobby, err := getLobbyBySlug(slug)
 		if err != nil {
-			// 404
+			http.Redirect(w, r, "/not-found", http.StatusSeeOther)
+			return
 		}
 
 		tmpl, err := template.ParseFiles("./templates/players.html")
@@ -243,7 +249,8 @@ func guessHandler(server *sse.Server) func(w http.ResponseWriter, r *http.Reques
 		slug := r.PathValue("lobbySlug")
 		lobby, err := getLobbyBySlug(slug)
 		if err != nil {
-			// 404
+			http.Redirect(w, r, "/not-found", http.StatusSeeOther)
+			return
 		}
 
 		player := lobby.getPlayerFromRequest(w, r)
@@ -493,4 +500,16 @@ func getLobbyBySlug(slug string) (*Lobby, error) {
 	}
 
 	return nil, errors.New("Lobby not found")
+}
+
+func notFoundHandler() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFiles("./templates/404.html")
+		if err != nil {
+
+		}
+		if err := tmpl.Execute(w, nil); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
 }
