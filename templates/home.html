@@ -36,6 +36,10 @@
             main {
                 overflow: auto;
                 padding: 2rem;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                grid-template-rows: max-content;
+                gap: 2rem;
             }
 
             h1 {
@@ -54,11 +58,10 @@
             a {
                 color: inherit;
                 text-decoration: none;
+                display: block;
             }
 
             .lobby-card {
-                margin-block-end: 2rem;
-
                 .image {
                     aspect-ratio: 1;
                     background-size: cover;
@@ -91,7 +94,7 @@
                 {{ range $lobby := . }}
                 <a href="/lobby/{{ $lobby.Slug }}">
                     <div class="lobby-card">
-                        <div class="image" style="   background-image: url({{ $lobby.ImageUrl }})"></div>
+                        <div class="image" style="      background-image: url({{ $lobby.ImageUrl }})"></div>
                         <div class="meta">
                             <h2>{{ $lobby.Name }}</h2>
                             <p>{{ len $lobby.Score }} players</p>
